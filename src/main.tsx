@@ -6,9 +6,17 @@ import { logseq as plugin } from '../package.json';
 import App from './App';
 import settings from './settings';
 
-async function openTaskPanel() {
+async function configStyle() {
   const rect = await logseq.App.queryElementRect('#' + plugin.id);
   const taskPanel = document.querySelector('#' + plugin.id)!;
+
+  if (taskPanel === null) {
+    console.log('taskPanel is null');
+    setTimeout(() => {
+      configStyle();
+    }, 100);
+    return;
+  }
 
   // @ts-ignore
   Object.assign(taskPanel.style, {
@@ -18,7 +26,10 @@ async function openTaskPanel() {
     // @ts-ignore
     left: rect.left + 'px',
   });
+}
 
+async function openTaskPanel() {
+  await configStyle();
   logseq.showMainUI();
 }
 

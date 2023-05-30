@@ -1,32 +1,33 @@
-import "virtual:windi.css";
-import React, { useEffect, useRef } from "react";
-import { ErrorBoundary, FallbackProps } from "react-error-boundary";
-import dayjs from "dayjs";
-import advancedFormat from "dayjs/plugin/advancedFormat";
-import TaskInput, { ITaskInputRef } from "./components/TaskInput";
+import 'virtual:windi.css';
+import React, { useEffect, useRef } from 'react';
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
+import dayjs from 'dayjs';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import TaskInput, { ITaskInputRef } from './components/TaskInput';
 import {
   TaskCategoryTab,
   TaskCategoryTabSection,
-} from "./components/TaskCategoryTabSection";
-import TaskSection, { GroupBy } from "./components/TaskSection";
-import TaskFilter from "./components/TaskFilter";
-import { logseq as plugin } from "../package.json";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { visibleState } from "./state/visible";
-import { userConfigsState } from "./state/user-configs";
-import { themeStyleState } from "./state/theme";
-import getTodayTaskQuery from "./querys/today";
-import getScheduledTaskQuery from "./querys/scheduled";
-import getAnytimeTaskQuery from "./querys/anytime";
-import { settingsState } from "./state/settings";
-import * as api from "./api";
-import getNextNDaysTaskQuery from "./querys/next-n-days";
-import { fixPreferredDateFormat } from "./utils";
-import "./style.css";
-import { markerState, priorityState } from "./state/filter";
-import { TaskPriority } from "./models/TaskEntity";
-import { useRefreshAll } from "./hooks/useRefreshAll";
-import { useHotKey } from "./hooks/useHotKey";
+} from './components/TaskCategoryTabSection';
+import TaskSection, { GroupBy } from './components/TaskSection';
+import TaskFilter from './components/TaskFilter';
+import { logseq as plugin } from '../package.json';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import { visibleState } from './state/visible';
+import { userConfigsState } from './state/user-configs';
+import { themeStyleState } from './state/theme';
+import getTodayTaskQuery from './querys/today';
+import getScheduledTaskQuery from './querys/scheduled';
+import getAnytimeTaskQuery from './querys/anytime';
+import { settingsState } from './state/settings';
+import * as api from './api';
+import getNextNDaysTaskQuery from './querys/next-n-days';
+import { fixPreferredDateFormat } from './utils';
+import './style.css';
+import { markerState, priorityState } from './state/filter';
+import { TaskPriority } from './models/TaskEntity';
+import { useRefreshAll } from './hooks/useRefreshAll';
+import { useHotKey } from './hooks/useHotKey';
+import getCurrentPageTaskQuery from './querys/currentPage';
 
 dayjs.extend(advancedFormat);
 
@@ -82,57 +83,86 @@ function App() {
     refreshAll();
   };
 
-  const customMarkers = settings.customMarkers.split(",");
+  const customMarkers = settings.customMarkers.split(',');
 
-  let categoryTabs: TaskCategoryTab[] = [
+  const defaultCategoryTabs = [
     new TaskCategoryTab(
-      "Today",
-      <TaskSection title="Today" query={getTodayTaskQuery(customMarkers)} />
+      'Today',
+      <TaskSection title="Today" query={getTodayTaskQuery(customMarkers)} />,
     ),
     new TaskCategoryTab(
-      "Scheduled",
+      'Scheduled',
       (
         <TaskSection
           title="Scheduled"
           query={
             settings.showNextNDaysTask
               ? getScheduledTaskQuery(
-                  dayjs().add(settings.numberOfNextNDays, "d")
+                  dayjs().add(settings.numberOfNextNDays, 'd'),
                 )
               : getScheduledTaskQuery()
           }
         />
-      )
+      ),
     ),
     new TaskCategoryTab(
-      "Anytime",
+      'Anytime',
       (
         <TaskSection
           title="Anytime"
           query={getAnytimeTaskQuery()}
           groupBy={GroupBy.Page}
         />
-      )
+      ),
     ),
   ];
 
   if (settings.showNextNDaysTask) {
-    categoryTabs.push(
+    defaultCategoryTabs.push(
       new TaskCategoryTab(
-        "Next N Days",
+        'Next N Days',
         (
           <TaskSection
             title={`Next ${settings.numberOfNextNDays} Days`}
             query={getNextNDaysTaskQuery(settings.numberOfNextNDays)}
           />
-        )
-      )
+        ),
+      ),
     );
   }
 
+  const [categoryTabs, setCategoryTabs] = React.useState<TaskCategoryTab[]>([
+    ...defaultCategoryTabs,
+  ]);
+  const [pageName, setPageName] = React.useState<string>('');
+
+  window.logseq.Editor.getCurrentPage().then((page) => {
+    const currentPageName = page?.name;
+    if (currentPageName == pageName) {
+      return;
+    }
+    if (currentPageName) {
+      setPageName(currentPageName);
+      setCategoryTabs([
+        ...defaultCategoryTabs,
+        new TaskCategoryTab(
+          'Page',
+          (
+            <TaskSection
+              title="Page"
+              query={getCurrentPageTaskQuery(currentPageName)}
+            />
+          ),
+        ),
+      ]);
+    } else {
+      console.log('currentPageName is null');
+    }
+  });
+
   return (
     <main
-      className={`w-screen h-screen ${visible ? "block" : "hidden"}`}
+      className={`w-screen h-screen ${visible ? 'block' : 'hidden'}`}
       onClick={handleClickOutside}
     >
       <div ref={innerRef} id={plugin.id}>
