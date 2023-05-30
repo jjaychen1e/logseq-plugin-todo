@@ -3,3 +3,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.idea/.gitignore
+.idea/logseq-plugin-todo.iml
+.idea/modules.xml
+.idea/prettier.xml
+.idea/vcs.xml
+.idea/codeStyles/codeStyleConfig.xml
+.idea/inspectionProfiles/Project_Default.xml
