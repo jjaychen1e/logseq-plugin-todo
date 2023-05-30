@@ -14,7 +14,5 @@ const visibleChangedEffect: AtomEffect<boolean> = ({ setSelf }) => {
 export const visibleState = atom({
   key: 'visible',
   default: logseq.isMainUIVisible,
-  effects: [
-    visibleChangedEffect,
-  ],
+  effects: [visibleChangedEffect],
 });

@@ -1,80 +1,57 @@
-import 'virtual:windi.css';
-import React, { useEffect, useRef } from 'react';
-import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
-import { AppUserConfigs } from '@logseq/libs/dist/LSPlugin.user';
-import dayjs from 'dayjs';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
-import TaskInput, { ITaskInputRef } from './components/TaskInput';
-import { TaskCategoryTab, TaskCategoryTabSection } from './components/TaskCategoryTabSection';
-import TaskSection, { GroupBy } from './components/TaskSection';
-import { logseq as plugin } from '../package.json';
-import { useRecoilCallback, useRecoilState, useRecoilValue } from 'recoil';
-import { visibleState } from './state/visible';
-import { userConfigsState } from './state/user-configs';
-import { themeModeState, themeStyleState } from './state/theme';
-import getTodayTaskQuery from './querys/today';
-import getScheduledTaskQuery from './querys/scheduled';
-import getAnytimeTaskQuery from './querys/anytime';
-import { settingsState } from './state/settings';
-import * as api from './api';
-import Mousetrap from 'mousetrap';
-import 'mousetrap-global-bind';
-import './style.css';
+import "virtual:windi.css";
+import React, { useEffect, useRef } from "react";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
+import dayjs from "dayjs";
+import advancedFormat from "dayjs/plugin/advancedFormat";
+import TaskInput, { ITaskInputRef } from "./components/TaskInput";
+import {
+  TaskCategoryTab,
+  TaskCategoryTabSection,
+} from "./components/TaskCategoryTabSection";
+import TaskSection, { GroupBy } from "./components/TaskSection";
+import TaskFilter from "./components/TaskFilter";
+import { logseq as plugin } from "../package.json";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { visibleState } from "./state/visible";
+import { userConfigsState } from "./state/user-configs";
+import { themeStyleState } from "./state/theme";
+import getTodayTaskQuery from "./querys/today";
+import getScheduledTaskQuery from "./querys/scheduled";
+import getAnytimeTaskQuery from "./querys/anytime";
+import { settingsState } from "./state/settings";
+import * as api from "./api";
+import getNextNDaysTaskQuery from "./querys/next-n-days";
+import { fixPreferredDateFormat } from "./utils";
+import "./style.css";
+import { markerState, priorityState } from "./state/filter";
+import { TaskPriority } from "./models/TaskEntity";
+import { useRefreshAll } from "./hooks/useRefreshAll";
+import { useHotKey } from "./hooks/useHotKey";
 
 dayjs.extend(advancedFormat);
 
 function ErrorFallback({ error }: FallbackProps) {
-  useEffect(() => {
-    window.logseq.App.showMsg(`[${plugin.id}]: ${error.message}`, 'error');
-  }, [error.message]);
-
   return (
-    <div role="alert" className="text-red-500 font-semibold">
-      <p>Todo list failed to render.</p>
-      <p>Can you re-index your graph and try again?</p>
+    <div role="alert" className="text-red-500">
+      <p className="font-semibold">Todo list failed to render.</p>
+      <p className="text-sm">Can you re-index your graph and try again?</p>
+      <p className="text-sm">[Error]: {error.message}</p>
     </div>
   );
 }
 
-interface IAppProps {
-  userConfigs: AppUserConfigs;
-}
-
-function App(props: IAppProps) {
+function App() {
   const innerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<ITaskInputRef>(null);
   const visible = useRecoilValue(visibleState);
   const [userConfigs, setUserConfigs] = useRecoilState(userConfigsState);
   const themeStyle = useRecoilValue(themeStyleState);
-  const themeMode = useRecoilValue(themeModeState);
-  const { hotkey, whereToPlaceNewTask } = useRecoilValue(settingsState);
+  const settings = useRecoilValue(settingsState);
+  const marker = useRecoilValue(markerState);
+  const priority = useRecoilValue(priorityState);
+  const refreshAll = useRefreshAll();
 
-  const refreshAll = useRecoilCallback(
-    ({ snapshot, refresh }) =>
-      () => {
-        for (const node of snapshot.getNodes_UNSTABLE()) {
-          refresh(node);
-        }
-      },
-    [],
-  );
-
-  useEffect(() => {
-    setUserConfigs(props.userConfigs);
-  }, [props.userConfigs, setUserConfigs]);
-
-  useEffect(() => {
-    if (!hotkey) {
-      return;
-    }
-
-    // @ts-ignore
-    Mousetrap.bindGlobal(hotkey, () => window.logseq.hideMainUI(), 'keydown');
-    return () => {
-      // @ts-ignore
-      Mousetrap.unbindGlobal(hotkey, 'keydown');
-    };
-  }, [hotkey]);
+  useHotKey(settings.hotkey);
 
   useEffect(() => {
     if (visible) {
@@ -82,29 +59,10 @@ function App(props: IAppProps) {
         inputRef.current?.focus();
       }, 0);
       refreshAll();
-
-      const keydownHandler = (ev: KeyboardEvent) => {
-        if (ev.key === 'Escape') {
-          window.logseq.hideMainUI();
-          return;
-        }
-      };
-      document.addEventListener('keydown', keydownHandler);
-      return () => {
-        document.removeEventListener('keydown', keydownHandler);
-      };
     }
-  }, [visible, refreshAll]);
 
-  useEffect(() => {
-    if (themeMode === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    }
-  }, [themeMode]);
+    window.logseq.App.getUserConfigs().then(setUserConfigs);
+  }, [visible, refreshAll, setUserConfigs]);
 
   const handleClickOutside = (e: React.MouseEvent) => {
     if (!innerRef.current?.contains(e.target as unknown as Node)) {
@@ -114,36 +72,81 @@ function App(props: IAppProps) {
 
   const createNewTask = async (content: string) => {
     const { preferredDateFormat, preferredTodo } = userConfigs!;
-    const date = dayjs().format(preferredDateFormat);
-    await api.createNewTask(date, content, { preferredTodo, whereToPlaceNewTask });
+    const { whereToPlaceNewTask } = settings;
+    const date = dayjs().format(fixPreferredDateFormat(preferredDateFormat!));
+    await api.createNewTask(date, content, {
+      marker: marker.value || preferredTodo,
+      priority: priority.value as TaskPriority,
+      whereToPlaceNewTask,
+    });
     refreshAll();
   };
 
-  const categoryTabs: TaskCategoryTab[] = [
-    new TaskCategoryTab('Today', <TaskSection title="Today" query={getTodayTaskQuery()}/>),
-    new TaskCategoryTab('Scheduled', <TaskSection title="Scheduled" query={getScheduledTaskQuery()}/>),
-    new TaskCategoryTab('Anytime', <TaskSection title="Anytime" query={getAnytimeTaskQuery()} groupBy={GroupBy.Page}/>),
-  ]
+  const customMarkers = settings.customMarkers.split(",");
+
+  let categoryTabs: TaskCategoryTab[] = [
+    new TaskCategoryTab(
+      "Today",
+      <TaskSection title="Today" query={getTodayTaskQuery(customMarkers)} />
+    ),
+    new TaskCategoryTab(
+      "Scheduled",
+      (
+        <TaskSection
+          title="Scheduled"
+          query={
+            settings.showNextNDaysTask
+              ? getScheduledTaskQuery(
+                  dayjs().add(settings.numberOfNextNDays, "d")
+                )
+              : getScheduledTaskQuery()
+          }
+        />
+      )
+    ),
+    new TaskCategoryTab(
+      "Anytime",
+      (
+        <TaskSection
+          title="Anytime"
+          query={getAnytimeTaskQuery()}
+          groupBy={GroupBy.Page}
+        />
+      )
+    ),
+  ];
+
+  if (settings.showNextNDaysTask) {
+    categoryTabs.push(
+      new TaskCategoryTab(
+        "Next N Days",
+        (
+          <TaskSection
+            title={`Next ${settings.numberOfNextNDays} Days`}
+            query={getNextNDaysTaskQuery(settings.numberOfNextNDays)}
+          />
+        )
+      )
+    );
+  }
 
   return (
     <main
-      className={`w-screen h-screen ${visible ? 'block' : 'hidden'}`}
+      className={`w-screen h-screen ${visible ? "block" : "hidden"}`}
       onClick={handleClickOutside}
     >
       <div ref={innerRef} id={plugin.id}>
         <div
-          className="absolute p-4 w-90 h-120 -left-13rem bg-white shadow rounded-lg overflow-y-auto border-2"
+          className="absolute p-4 w-90 h-120 -left-13rem bg-white shadow rounded-lg overflow-y-auto scrollbar-hide border-2 transition-all transition-200"
           style={{
             backgroundColor: themeStyle.primaryBackgroundColor,
             borderColor: themeStyle.secondaryBackgroundColor,
           }}
         >
           <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <TaskInput
-              ref={inputRef}
-              onCreateTask={createNewTask}
-            />
-            <TaskCategoryTabSection tabs={categoryTabs}/>
+            <TaskInput ref={inputRef} onCreateTask={createNewTask} />
+            <TaskFilter />
+            <TaskCategoryTabSection tabs={categoryTabs} />
           </ErrorBoundary>
         </div>
       </div>

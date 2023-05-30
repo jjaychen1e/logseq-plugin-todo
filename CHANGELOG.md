@@ -1,3 +1,103 @@
+# [1.19.0](https://github.com/ahonn/logseq-plugin-todo/compare/v1.18.0...v1.19.0) (2023-04-23)
+
+
+### Features
+
+* including TODOs from future daily note pages, [#52](https://github.com/ahonn/logseq-plugin-todo/issues/52) ([035ebac](https://github.com/ahonn/logseq-plugin-todo/commit/035ebaca809445b57cdb87a0ceb4ff7cc5cb3baf))
+
+# [1.18.0](https://github.com/ahonn/logseq-plugin-todo/compare/v1.17.0...v1.18.0) (2023-04-23)
+
+
+### Features
+
+* add custom markers setting support and adjust query logic ([d1714e1](https://github.com/ahonn/logseq-plugin-todo/commit/d1714e1f6da1e76809c1a9e6c3a2b50751e661a4))
+
+# [1.17.0](https://github.com/ahonn/logseq-plugin-todo/compare/v1.16.5...v1.17.0) (2023-03-28)
+
+
+### Features
+
+* add shift click hotkey to open task in right sidebar, [#47](https://github.com/ahonn/logseq-plugin-todo/issues/47) ([1b5fcd7](https://github.com/ahonn/logseq-plugin-todo/commit/1b5fcd7848027dd2fcb15b786cca2c28c6c3ebde))
+* support trigger the opposite behavior of openInRightSidebar, [#47](https://github.com/ahonn/logseq-plugin-todo/issues/47) ([196d5e1](https://github.com/ahonn/logseq-plugin-todo/commit/196d5e13730bb1b679b297808bcd3fac778382d5))
+
+## [1.16.5](https://github.com/ahonn/logseq-plugin-todo/compare/v1.16.4...v1.16.5) (2023-03-14)
+
+
+### Bug Fixes
+
+* refactor with new hooks, and fix theme mode issue ([65d5706](https://github.com/ahonn/logseq-plugin-todo/commit/65d5706736a7f815446f596f772fa9099cf07f51))
+
+## [1.16.4](https://github.com/ahonn/logseq-plugin-todo/compare/v1.16.3...v1.16.4) (2023-03-09)
+
+
+### Bug Fixes
+
+* update userConfigsState to use getUserConfigs() as default value, [#31](https://github.com/ahonn/logseq-plugin-todo/issues/31) ([a1a80eb](https://github.com/ahonn/logseq-plugin-todo/commit/a1a80eb53b5296d715f9f2bdc923da53db16d6cc))
+
+## [1.16.3](https://github.com/ahonn/logseq-plugin-todo/compare/v1.16.2...v1.16.3) (2023-03-01)
+
+
+### Bug Fixes
+
+* fixed task item work break issue, [#41](https://github.com/ahonn/logseq-plugin-todo/issues/41) ([e624f03](https://github.com/ahonn/logseq-plugin-todo/commit/e624f0380181b5979743d9f4310f274efa2cc1ce))
+
+## [1.16.2](https://github.com/ahonn/logseq-plugin-todo/compare/v1.16.1...v1.16.2) (2023-02-28)
+
+
+### Bug Fixes
+
+* update logseq sdk ([b1f4138](https://github.com/ahonn/logseq-plugin-todo/commit/b1f413812e6cb66116545bee1f2a52f8ac2f47f5))
+
+## [1.16.1](https://github.com/ahonn/logseq-plugin-todo/compare/v1.16.0...v1.16.1) (2023-02-26)
+
+
+### Bug Fixes
+
+* make the font color of the filter more comfortable ([f37aceb](https://github.com/ahonn/logseq-plugin-todo/commit/f37aceb49b156e93756d4b1587e1196ac3734ce6))
+
+# [1.16.0](https://github.com/ahonn/logseq-plugin-todo/compare/v1.15.0...v1.16.0) (2023-02-26)
+
+
+### Features
+
+* add button for open section tasks in the right side ([8c37636](https://github.com/ahonn/logseq-plugin-todo/commit/8c37636a6681ed2fcb45b5d809cb28018600d921))
+
+# [1.15.0](https://github.com/ahonn/logseq-plugin-todo/compare/v1.14.1...v1.15.0) (2023-02-26)
+
+
+### Bug Fixes
+
+* fix type error ([705af59](https://github.com/ahonn/logseq-plugin-todo/commit/705af594f9133e6f1543beedaa1f827759b38cf3))
+
+
+### Features
+
+* add defaultMarker and defaultPriority settings ([137dbc7](https://github.com/ahonn/logseq-plugin-todo/commit/137dbc7a848f5def1165b040ed7ec87ece31c474))
+* add task filter component ([eb8c41b](https://github.com/ahonn/logseq-plugin-todo/commit/eb8c41bc0c286b7958bbb168ec3cd3ea1456102f))
+* add the ability to filter tasks by marker or priority level. ([412415f](https://github.com/ahonn/logseq-plugin-todo/commit/412415f10a7c8e003781b9f42f8737a9d253317c))
+
+## [1.14.1](https://github.com/ahonn/logseq-plugin-todo/compare/v1.14.0...v1.14.1) (2023-01-17)
+
+
+### Bug Fixes
+
+* label should not let task be removed from the list, [#37](https://github.com/ahonn/logseq-plugin-todo/issues/37) ([a17cad7](https://github.com/ahonn/logseq-plugin-todo/commit/a17cad761c155555a781794d5bdb5137490e2450))
+
+# [1.14.0](https://github.com/ahonn/logseq-plugin-todo/compare/v1.13.0...v1.14.0) (2023-01-10)
+
+
+### Features
+
+* exit editing mode when create task where today journal page ([ae96a9f](https://github.com/ahonn/logseq-plugin-todo/commit/ae96a9f302417862eb2b99a3a1f9b65acc90a2b5))
+
+# [1.13.0](https://github.com/ahonn/logseq-plugin-todo/compare/v1.12.1...v1.13.0) (2023-01-08)
+
+
+### Features
+
+* add next n days task section and add setting item for enable/disable it ([ead0825](https://github.com/ahonn/logseq-plugin-todo/commit/ead0825bfcecffb060e26499a2d5872a8f72086f))
+* sort unscheduled tasks with page's updatedAt property. ([12f1461](https://github.com/ahonn/logseq-plugin-todo/commit/12f1461ba46b25c2066175474c9b832f7c464d52))
+
 ## [1.12.1](https://github.com/ahonn/logseq-plugin-todo/compare/v1.12.0...v1.12.1) (2022-11-14)
 
 

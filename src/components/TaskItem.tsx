@@ -6,7 +6,7 @@ import { ArrowDownCircle, BrightnessUp } from 'tabler-icons-react';
 import { TaskEntityObject } from '../models/TaskEntity';
 import 'rc-checkbox/assets/index.css';
 import { useRecoilValue } from 'recoil';
-import { userConfigsState } from '../state/user-configs';
+import { taskMarkersState, userConfigsState } from '../state/user-configs';
 import { themeStyleState } from '../state/theme';
 import {
   isTodayTask,
@@ -16,6 +16,7 @@ import {
   toggleTaskStatus,
 } from '../api';
 import { settingsState } from '../state/settings';
+import { fixPreferredDateFormat } from '../utils';
 
 export interface ITaskItemProps {
   task: TaskEntityObject;
@@ -26,7 +27,8 @@ const TaskItem: React.FC<ITaskItemProps> = (props) => {
   const { task, onChange } = props;
   const themeStyle = useRecoilValue(themeStyleState);
   const { preferredDateFormat, preferredTodo } = useRecoilValue(userConfigsState);
-  const { openInRightSidebar } = useRecoilValue(settingsState);
+  const taskMarkers = useRecoilValue(taskMarkersState);
+  const settings = useRecoilValue(settingsState);
   const [checked, setChecked] = React.useState(task.completed);
 
   const isExpiredTask = useMemo(() => {
@@ -37,7 +39,10 @@ const TaskItem: React.FC<ITaskItemProps> = (props) => {
     return date.isBefore(dayjs(), 'day');
   }, [task.scheduled]);
 
-  const openTaskBlock = () => {
+  const openTaskBlock = (e: React.MouseEvent<HTMLDivElement>) => {
+    const openInRightSidebar = e.nativeEvent.shiftKey
+      ? !settings.openInRightSidebar
+      : settings.openInRightSidebar;
     openTask(task, {
       openInRightSidebar,
     });
@@ -45,12 +50,12 @@ const TaskItem: React.FC<ITaskItemProps> = (props) => {
   };
 
   const toggleStatus = async () => {
-    await toggleTaskStatus(task, { preferredTodo });
+    await toggleTaskStatus(task, { marker: preferredTodo });
     setChecked(!checked);
   };
 
   const toggleMarker = () => {
-    toggleTaskMarker(task, { preferredTodo });
+    toggleTaskMarker(task, { markerGroup: taskMarkers });
     onChange();
   };
 
@@ -71,7 +76,7 @@ const TaskItem: React.FC<ITaskItemProps> = (props) => {
           className="pt-1 mr-1"
         />
       </div>
-      <div className="flex-1 border-b border-gray-100 dark:border-gray-400 pb-2 pt-1 text-sm leading-normal break-all">
+      <div className="flex-1 border-b border-gray-100 dark:border-gray-400 pb-2 pt-1 text-sm leading-normal">
         <div className="flex justify-between items-center">
           <div className="flex-col">
             <div className={contentClassName}>
@@ -95,7 +100,7 @@ const TaskItem: React.FC<ITaskItemProps> = (props) => {
                   })}
                 >
                   {dayjs(task.scheduled.toString(), 'YYYYMMDD').format(
-                    preferredDateFormat,
+                    fixPreferredDateFormat(preferredDateFormat!),
                   )}
                 </time>
               )}
@@ -110,8 +115,8 @@ const TaskItem: React.FC<ITaskItemProps> = (props) => {
               }}
             >
               <ArrowDownCircle
-                size={22}
-                className={classnames('stroke-gray-300', {
+                size={20}
+                className={classnames('stroke-gray-400 dark:stroke-gray-300', {
                   'cursor-pointer': task.page.journalDay !== task.scheduled,
                   'cursor-not-allowed': task.page.journalDay === task.scheduled,
                 })}

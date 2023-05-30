@@ -1,14 +1,16 @@
 import { BlockEntity } from '@logseq/libs/dist/LSPlugin.user';
 import dayjs from 'dayjs';
-import { TaskEntityObject, TaskMarker } from './models/TaskEntity';
+import { TaskEntityObject, TaskMarker, TaskPriority } from './models/TaskEntity';
 
 export const MARKER_GROUPS: Record<string, TaskMarker[]> = {
-  [TaskMarker.TODO]: [TaskMarker.TODO, TaskMarker.DOING, TaskMarker.DONE],
-  [TaskMarker.LATER]: [TaskMarker.LATER, TaskMarker.NOW, TaskMarker.DONE],
+  [TaskMarker.TODO]: [TaskMarker.TODO, TaskMarker.DOING],
+  [TaskMarker.LATER]: [TaskMarker.LATER, TaskMarker.NOW],
 };
 
 export interface ITaskOptions {
-  preferredTodo: string;
+  marker?: TaskMarker;
+  markerGroup?: (TaskMarker | string)[];
+  priority?: TaskPriority;
   whereToPlaceNewTask?: string;
 }
 
@@ -23,7 +25,8 @@ export async function createNewTask(
   content: string,
   opts: ITaskOptions,
 ) {
-  const { preferredTodo, whereToPlaceNewTask } = opts;
+  const { marker, priority, whereToPlaceNewTask } = opts;
+  const rawContent = `${marker} ${priority ? `[#${priority}]` : ''} ${content}`;
   let page = await window.logseq.Editor.getPage(date);
   if (page === null) {
     page = await window.logseq.Editor.createPage(date, {
@@ -43,26 +46,28 @@ export async function createNewTask(
     }
     await window.logseq.Editor.insertBlock(
       parentBlock!.uuid,
-      `${preferredTodo} ${content}`,
+      rawContent,
     );
   } else {
     await window.logseq.Editor.appendBlockInPage(
       page!.name,
-      `${preferredTodo} ${content}`,
+      rawContent,
     );
   }
 
   if (blocksTree.length === 1 && blocksTree[0].content === '') {
     await window.logseq.Editor.removeBlock(blocksTree[0].uuid);
   }
+
+  window.logseq.Editor.exitEditingMode(true);
 }
 
 export async function toggleTaskStatus(
   task: TaskEntityObject,
-  options: ITaskOptions,
+  options: ITaskOptions & Required<Pick<ITaskOptions, 'marker'>>,
 ) {
   const { uuid, completed, marker } = task;
-  const nextMarker = completed ? options.preferredTodo : TaskMarker.DONE;
+  const nextMarker = completed ? options.marker : TaskMarker.DONE;
   await window.logseq.Editor.updateBlock(
     uuid,
     task.rawContent.replace(marker, nextMarker),
@@ -93,21 +98,12 @@ export function openTaskPage(
 
 export async function toggleTaskMarker(
   task: TaskEntityObject,
-  options: ITaskOptions,
+  options: ITaskOptions & Required<Pick<ITaskOptions, 'markerGroup'>>,
 ) {
   const { uuid, rawContent, marker } = task;
-
-  let newMarker = marker;
-  if (marker === TaskMarker.WAITING) {
-    newMarker =
-      options.preferredTodo === TaskMarker.LATER
-        ? TaskMarker.LATER
-        : TaskMarker.TODO;
-  } else {
-    const markerGroup = MARKER_GROUPS[options.preferredTodo];
-    const currentMarkIndex = markerGroup.findIndex((m) => m === marker);
-    newMarker = markerGroup[(currentMarkIndex + 1) % markerGroup.length];
-  }
+  const { markerGroup } = options;
+  const currentMarkIndex = markerGroup.findIndex((m) => m === marker);
+  const newMarker = markerGroup[(currentMarkIndex + 1) % markerGroup.length];
 
   const newRawContent = rawContent.replace(new RegExp(`^${marker}`), newMarker);
   await window.logseq.Editor.updateBlock(uuid, newRawContent);

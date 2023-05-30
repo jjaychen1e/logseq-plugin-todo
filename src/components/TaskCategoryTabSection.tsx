@@ -19,7 +19,7 @@ export const TaskCategoryTabSection: React.FC<ITaskCategoryTabProps> = (props) =
   const themeStyle = useRecoilValue(themeStyleState);
 
   return (
-    <div className="flex flex-col" style={{borderRadius: "4px"}}>
+    <div className="flex flex-col" style={{borderRadius: "4px", marginTop: "4px"}}>
       <div className="flex flex-row justify-between">
         {props.tabs.map((tab) => (
           <div key={tab.title} className={`${
